@@ -1,39 +1,41 @@
 from pathlib import Path
 from PIL import Image
 
+import argparse
+import os
+import re
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--data', type=str)
+
+args = parser.parse_args()
+
+def clean_data(path: str, label_file: str):
+    with open(os.path.join(path, label_file), 'r') as f:
+        for raw in f:
+            if re.match('.*jpg.*', raw):
+                name = raw.split('.jpg')[0].strip()
+                label = raw.split('.jpg')[-1].strip()       
+            elif re.match('.*jpeg.*', raw):
+                name = raw.split('.jpeg')[0].strip(' \t')
+                label = raw.split('.jpeg')[1].strip(' \t')
+            else:
+                print(f"未观察到的数据: {raw}")  
+                continue           
+            
+            if int(label) >= 192:
+                print(f"非法数据: {name} {label}")
+                target_file = os.path.join(path, name + '.jpg')
+                if os.path.exists(target_file):
+                    os.remove(target_file)
+
 if __name__ == '__main__':
     
-    # files = [p for p in Path('data/trainset').glob('**/*.jpg')]
-    
-    # max_w = 0
-    # max_h = 0
-    # w_name = ''
-    # h_name = ''
-    # for file in files:
-    #     img = Image.open(file)
-    #     width, height = img.size
-    #     print(file.name)
-    #     if width > max_w:
-    #         w_name = file.name
-    #         max_w = width
-    #     if height > max_h:
-    #         h_name = file.name 
-    #         max_h = height           
-        
-    # print(f"max width: {max_w} \n max height: {max_h} \n max width file name: {w_name} \n max height name: {h_name}")
-    
-    dic = {}
-    with open('data/trainset/train.txt', 'r') as f:
-        for raw in f:
-            name = raw.split('.jpg')[0].strip()
-            label = raw.split('.jpg')[-1].strip()
-            #print(f"name: {name} label: {label}")
-            dic[name] = label
-    
-    name = "A*otDrR42uc_YAAAAAAAAAAAAAAQAAAQ"
-    label = dic[name]        
-    print(f"name: {name} label: {label}")
-    #print(dic)
+    base_path = args.data
 
-        
+    clean_data(os.path.join(base_path, 'trainset'), 'train.txt')
+    
+    print("valset")
+    clean_data(os.path.join(base_path, 'valset'), 'val.txt')
+    
             

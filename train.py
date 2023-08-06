@@ -4,6 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.optim import Adam
 from torch import nn
 import torch
+import re
 from torchvision import transforms as T, utils
 from PIL import Image
 from tqdm import tqdm
@@ -26,8 +27,13 @@ class pet_dataset(Dataset):
         self.labels = {}
         with open(folder + f'/{set_type}.txt') as f:
             for raw in f:
-                name = raw.split('.jpg')[0].strip()
-                label = raw.split('.jpg')[-1].strip()
+                if re.match('.*jpg.*', raw):
+                    name = raw.split('.jpg')[0].strip()
+                    label = raw.split('.jpg')[-1].strip()       
+                elif re.match('.*jpeg.*', raw):
+                    name = raw.split('.jpeg')[0].strip(' \t')
+                    label = raw.split('.jpeg')[1].strip(' \t')
+            
                 self.labels[name] = label
 
         if set_type == 'train':
@@ -58,7 +64,7 @@ class trainer(object):
     def __init__(self,
                 model, 
                 folder, 
-                train_batch_size=16, 
+                train_batch_size=32, 
                 train_lr=1e-4,
                 train_num_step=100000,
                 adma_beta=(0.9, 0.99),
@@ -152,7 +158,7 @@ class trainer(object):
 
 if __name__ == '__main__':
     
-    p_net = Unet(8, dim_mults=(1, 2))
+    p_net = Unet(16, dim_mults=(1, 2, 4, 8))
     
     t = trainer(p_net,
                 'data'

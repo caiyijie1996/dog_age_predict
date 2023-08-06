@@ -37,12 +37,12 @@ class pet_dataset(Dataset):
                 self.labels[name] = label
 
         if set_type == 'train':
-            self.transform = T.Compose([T.Resize(image_size),
+            self.transform = T.Compose([T.Resize(size=(image_size, image_size)),
                                         T.RandomHorizontalFlip(),
                                         T.CenterCrop(image_size - clip_size),
                                         T.ToTensor()])
         else:
-            self.transform = T.Compose([T.Resize(image_size),
+            self.transform = T.Compose([T.Resize(size=(image_size, image_size)),
                                         T.ToTensor()])
     
     
@@ -64,7 +64,8 @@ class trainer(object):
     def __init__(self,
                 model, 
                 folder, 
-                train_batch_size=32, 
+                train_batch_size=32,
+                val_batch_size=16, 
                 train_lr=1e-4,
                 train_num_step=100000,
                 adma_beta=(0.9, 0.99),
@@ -76,13 +77,14 @@ class trainer(object):
         self.image_size = 256
         
         self.batch_size = train_batch_size
+        self.val_batch_size = val_batch_size
         self.train_num_steps = train_num_step
         
         ds = pet_dataset(folder + '/trainset', self.image_size)
         self.tr_dl = DataLoader(ds, batch_size=self.batch_size, shuffle=True, pin_memory=True, num_workers=cpu_count())
         
         ds = pet_dataset(folder + '/valset', self.image_size, set_type='val')
-        self.ts_dl = DataLoader(ds, batch_size=self.batch_size, shuffle=True, pin_memory=True, num_workers=cpu_count())
+        self.ts_dl = DataLoader(ds, batch_size=self.val_batch_size, shuffle=True, pin_memory=True, num_workers=cpu_count())
         
         self.opt = Adam(model.parameters(), lr=train_lr, betas=adma_beta)
         

@@ -90,7 +90,12 @@ class trainer(object):
         self.results_folder.mkdir(exist_ok=True)
         
         self.step = 0
-        self.device = "mps"
+        
+        self.device = "cpu"
+        if torch.backends.mps.is_available():
+            self.device = "mps"
+        elif torch.cuda.is_available():
+            self.device = "cuda"
     
     
     def train(self, step=0, load_model=False):
